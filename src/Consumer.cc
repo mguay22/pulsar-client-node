@@ -41,6 +41,8 @@ void Consumer::Init(Napi::Env env, Napi::Object exports) {
                       InstanceMethod("negativeAcknowledgeId", &Consumer::NegativeAcknowledgeId),
                       InstanceMethod("acknowledgeCumulative", &Consumer::AcknowledgeCumulative),
                       InstanceMethod("acknowledgeCumulativeId", &Consumer::AcknowledgeCumulativeId),
+                      InstanceMethod("pauseMessageListener", &Consumer::PauseMessageListener),
+                      InstanceMethod("resumeMessageListener", &Consumer::ResumeMessageListener),
                       InstanceMethod("seek", &Consumer::Seek),
                       InstanceMethod("seekTimestamp", &Consumer::SeekTimestamp),
                       InstanceMethod("isConnected", &Consumer::IsConnected),
@@ -448,6 +450,31 @@ void Consumer::Cleanup() {
     this->listener = nullptr;
     this->Unref();
   }
+}
+
+Napi::Value Consumer::PauseMessageListener(const Napi::CallbackInfo &info) {
+  return pauseResumeMessageListener(
+      [&]() { return pulsar_consumer_pause_message_listener(cConsumer.get()); });
+}
+
+Napi::Value Consumer::ResumeMessageListener(const Napi::CallbackInfo &info) {
+  return pauseResumeMessageListener([&]() { return resume_message_listener(cConsumer.get()); });
+}
+
+Napi::Value Consumer::pauseResumeMessageListener(std::function<pulsar_result()> fn) {
+  auto deferred = ThreadSafeDeferred::New(Env());
+
+  if (listener != nullptr) {
+    auto result = fn();
+    if (result == pulsar_result_Ok) {
+      deferred->Resolve(THREADSAFE_DEFERRED_RESOLVER(env.Null()));
+      return deferred->Promise();
+    }
+    deferred->Reject(std::string("Failed to toggle consumer listener: ") + pulsar_result_str(result));
+  } else {
+    deferred->Resolve(THREADSAFE_DEFERRED_RESOLVER(env.Null()));
+  }
+  return deferred->Promise();
 }
 
 Napi::Value Consumer::Close(const Napi::CallbackInfo &info) {

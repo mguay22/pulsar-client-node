@@ -20,7 +20,11 @@
 
 export interface ClientConfig {
   serviceUrl: string;
-  authentication?: AuthenticationTls | AuthenticationAthenz | AuthenticationToken | AuthenticationOauth2;
+  authentication?:
+    | AuthenticationTls
+    | AuthenticationAthenz
+    | AuthenticationToken
+    | AuthenticationOauth2;
   operationTimeoutSeconds?: number;
   ioThreads?: number;
   messageListenerThreads?: number;
@@ -34,7 +38,14 @@ export interface ClientConfig {
 }
 
 export class Client {
-  static setLogHandler(logHandler: (level: LogLevel, file: string, line: number, message: string) => void): void;
+  static setLogHandler(
+    logHandler: (
+      level: LogLevel,
+      file: string,
+      line: number,
+      message: string
+    ) => void
+  ): void;
   constructor(config: ClientConfig);
   createProducer(config: ProducerConfig): Promise<Producer>;
   subscribe(config: ConsumerConfig): Promise<Consumer>;
@@ -101,6 +112,8 @@ export class Consumer {
   negativeAcknowledgeId(messageId: MessageId): void;
   acknowledgeCumulative(message: Message): Promise<null>;
   acknowledgeCumulativeId(messageId: MessageId): Promise<null>;
+  pauseMessageListener(): Promise<null>;
+  resumeMessageListener(): Promise<null>;
   seek(messageId: MessageId): Promise<null>;
   seekTimestamp(timestamp: number): Promise<null>;
   isConnected(): boolean;
@@ -160,7 +173,7 @@ export class MessageId {
 }
 
 export class AuthenticationTls {
-  constructor(params: { certificatePath: string, privateKeyPath: string });
+  constructor(params: { certificatePath: string; privateKeyPath: string });
 }
 
 export class AuthenticationAthenz {
@@ -203,36 +216,22 @@ export enum LogLevel {
 }
 
 export type MessageRoutingMode =
-  'UseSinglePartition' |
-  'RoundRobinDistribution' |
-  'CustomPartition';
+  | "UseSinglePartition"
+  | "RoundRobinDistribution"
+  | "CustomPartition";
 
-export type HashingScheme =
-  'Murmur3_32Hash' |
-  'BoostHash' |
-  'JavaStringHash';
+export type HashingScheme = "Murmur3_32Hash" | "BoostHash" | "JavaStringHash";
 
-export type CompressionType =
-  'Zlib' |
-  'LZ4' |
-  'ZSTD' |
-  'SNAPPY';
+export type CompressionType = "Zlib" | "LZ4" | "ZSTD" | "SNAPPY";
 
-export type ProducerCryptoFailureAction =
-  'FAIL' |
-  'SEND';
+export type ProducerCryptoFailureAction = "FAIL" | "SEND";
 
 export type SubscriptionType =
-  'Exclusive' |
-  'Shared' |
-  'KeyShared' |
-  'Failover';
+  | "Exclusive"
+  | "Shared"
+  | "KeyShared"
+  | "Failover";
 
-export type InitialPosition =
-  'Latest' |
-  'Earliest';
+export type InitialPosition = "Latest" | "Earliest";
 
-export type ConsumerCryptoFailureAction =
-  'FAIL' |
-  'DISCARD' |
-  'CONSUME';
+export type ConsumerCryptoFailureAction = "FAIL" | "DISCARD" | "CONSUME";
